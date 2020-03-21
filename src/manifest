@@ -1,0 +1,8 @@
+Application-Name: DbSync
+Publisher-Name: Francis
+Main-Class: org.assignment.DbSync
+Permissions: all-permissions
+Codebase: *
+Class-Path: lib/mysql-connector-java-5.1.25.jar
+
+
