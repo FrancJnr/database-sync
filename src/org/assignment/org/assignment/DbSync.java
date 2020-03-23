@@ -8,13 +8,20 @@ import java.util.concurrent.TimeUnit;
   
 class DbSync {  
     public static void main(String[] args) throws InterruptedException {
+        String userName = "root";
+        String password = "";
+        String hostUrlDB1 = "jdbc:mysql://localhost:3306/techsava_sanofipos";
+        String hostUrlDB2 = "jdbc:mysql://localhost:3306/techsava_sanofipos";
         ScheduledExecutorService ses = Executors.newScheduledThreadPool(1);
         Runnable syncRecords = () -> {
             DbSync sync = new DbSync();
-            Connection db1Conn = sync.connectDB("root", "giftedbrain", "jdbc:mysql://localhost:3306/techsava_sanofipos");
-            Connection db2Conn = sync.connectDB("root", "giftedbrain", "jdbc:mysql://localhost:3306/techsava_sanofipos_copy");
+            Connection db1Conn = sync.connectDB(userName, password, hostUrlDB1);
+            Connection db2Conn = sync.connectDB(userName, password, hostUrlDB2);
+            //check if both databases are linked link
             if(db1Conn != null && db2Conn != null){
+                
                 System.out.println("Link Established");
+                //add default columns if they dont exist in the table verify in each execution
                 sync.addDefaultColumns("sma_sales", db1Conn, "created_at");
                 sync.addDefaultColumns("sma_sales", db2Conn, "created_at");
                 sync.addDefaultColumns("sma_sales", db1Conn, "updated_at");
@@ -39,25 +46,26 @@ class DbSync {
                 sync.addDefaultColumns("sma_budget", db2Conn, "created_at");
                 sync.addDefaultColumns("sma_budget", db1Conn, "updated_at");
                 sync.addDefaultColumns("sma_budget", db2Conn, "updated_at");
+                //check for updates or inserted records. Synchronize the records on both tables
+                sync.syncTableRecords("sma_sales",  db1Conn,  db2Conn, 1000, 1);
+                sync.syncTableRecords("sma_sales",  db2Conn,  db1Conn, 1000, 0);
 
-                sync.syncTableRecords("sma_sales",  db1Conn,  db2Conn, 1000000000, 1);
-                sync.syncTableRecords("sma_sales",  db2Conn,  db1Conn, 1000000000, 0);
+                sync.syncTableRecords("sma_sale_items",  db1Conn,  db2Conn, 1000, 1);
+                sync.syncTableRecords("sma_sale_items",  db2Conn,  db1Conn, 1000, 0);
 
-                sync.syncTableRecords("sma_sale_items",  db1Conn,  db2Conn, 1000000000, 1);
-                sync.syncTableRecords("sma_sale_items",  db2Conn,  db1Conn, 1000000000, 0);
+                sync.syncTableRecords("sma_purchases",  db1Conn,  db2Conn, 1000, 1);
+                sync.syncTableRecords("sma_purchases",  db2Conn,  db1Conn, 1000, 0);
 
-                sync.syncTableRecords("sma_purchases",  db1Conn,  db2Conn, 1000000000, 1);
-                sync.syncTableRecords("sma_purchases",  db2Conn,  db1Conn, 1000000000, 0);
+                sync.syncTableRecords("sma_purchase_items",  db1Conn,  db2Conn, 1000, 1);
+                sync.syncTableRecords("sma_purchase_items",  db2Conn,  db1Conn, 1000, 0);
 
-                sync.syncTableRecords("sma_purchase_items",  db1Conn,  db2Conn, 1000000000, 1);
-                sync.syncTableRecords("sma_purchase_items",  db2Conn,  db1Conn, 1000000000, 0);
-
-                sync.syncTableRecords("sma_budget",  db1Conn,  db2Conn, 1000000000, 1);
-                sync.syncTableRecords("sma_budget",  db2Conn,  db1Conn, 1000000000, 0);
+                sync.syncTableRecords("sma_budget",  db1Conn,  db2Conn, 1000, 1);
+                sync.syncTableRecords("sma_budget",  db2Conn,  db1Conn, 1000, 0);
 
             };
 
         };
+         //Set up a cron job to execute the syncRecords method after every 1000 seconds. 
         ScheduledFuture<?> scheduledFuture = ses.scheduleAtFixedRate(syncRecords, 5, 1, TimeUnit.SECONDS);
 
         while (true) {
