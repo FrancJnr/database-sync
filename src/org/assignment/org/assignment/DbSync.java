@@ -9,9 +9,9 @@ import java.util.concurrent.TimeUnit;
 class DbSync {  
     public static void main(String[] args) throws InterruptedException {
         String userName = "root";
-        String password = "root";
+        String password = "giftedbrain";
         String hostUrlDB1 = "jdbc:mysql://localhost:3306/techsava_sanofipos";
-        String hostUrlDB2 = "jdbc:mysql://localhost:3306/techsava_sanofipos";
+        String hostUrlDB2 = "jdbc:mysql://localhost:3306/techsava_sanofipos_copy";
         ScheduledExecutorService ses = Executors.newScheduledThreadPool(1);
         Runnable syncRecords = () -> {
             DbSync sync = new DbSync();
@@ -93,8 +93,8 @@ class DbSync {
         columnsPlaceHolder.append("?");
         String responseMessage = "";
         //Query to execute recent updates since the last update
-        String updateDb2Query = "SELECT *FROM "+tableName + " WHERE UNIX_TIMESTAMP(updated_at)>=UNIX_TIMESTAMP(current_timestamp()) - "+lastExecutionTime;
-        String insertDb2Query = "SELECT *FROM "+tableName + " WHERE UNIX_TIMESTAMP(created_at)>=UNIX_TIMESTAMP(current_timestamp()) - "+lastExecutionTime;
+        String updateDb2Query = "SELECT *FROM "+tableName + " WHERE UNIX_TIMESTAMP('updated_at')+"+lastExecutionTime +">=UNIX_TIMESTAMP(current_timestamp())";
+        String insertDb2Query = "SELECT *FROM "+tableName + " WHERE UNIX_TIMESTAMP('created_at')+"+lastExecutionTime +">=UNIX_TIMESTAMP(current_timestamp())";
         PreparedStatement statement1 = null;
         PreparedStatement statement2 = null;
         ResultSet rs1 = null;
@@ -112,7 +112,7 @@ class DbSync {
             }
             //Perform batch updates to all columns by using REPLACE INTO.
             String updateFromDb2Query = "REPLACE INTO "+tableName+" SELECT "+ columnsPlaceHolder.toString();
-            String insertFromDb2Query = "INSERT INTO "+tableName+ " SELECT "+columnsPlaceHolder;
+            String insertFromDb2Query = "INSERT INTO "+tableName+ " SELECT "+columnsPlaceHolder.toString();
             while (rs2.next()){
                 if(action==0){statement1 = connDb1.prepareStatement(updateFromDb2Query); System.out.println("Checking For updates on "+tableName);}
                 else if(action == 1){statement1 = connDb1.prepareStatement(insertFromDb2Query);System.out.println("Checking For new rows in "+tableName);}
@@ -146,6 +146,7 @@ class DbSync {
 
         } catch (Exception e) {
             responseMessage = e.toString();
+            System.out.println("Synchronizing "+ e);
 
         }
         return responseMessage;
