@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 class DbSync {  
     public static void main(String[] args) throws InterruptedException {
         String userName = "root";
-        String password = "";
+        String password = "root";
         String hostUrlDB1 = "jdbc:mysql://localhost:3306/techsava_sanofipos";
         String hostUrlDB2 = "jdbc:mysql://localhost:3306/techsava_sanofipos";
         ScheduledExecutorService ses = Executors.newScheduledThreadPool(1);
@@ -47,20 +47,20 @@ class DbSync {
                 sync.addDefaultColumns("sma_budget", db1Conn, "updated_at");
                 sync.addDefaultColumns("sma_budget", db2Conn, "updated_at");
                 //check for updates or inserted records. Synchronize the records on both tables
-                sync.syncTableRecords("sma_sales",  db1Conn,  db2Conn, 1000, 1);
-                sync.syncTableRecords("sma_sales",  db2Conn,  db1Conn, 1000, 0);
+                sync.syncTableRecords("sma_sales",  db1Conn,  db2Conn, 100000, 1);
+                sync.syncTableRecords("sma_sales",  db2Conn,  db1Conn, 100000, 0);
 
-                sync.syncTableRecords("sma_sale_items",  db1Conn,  db2Conn, 1000, 1);
-                sync.syncTableRecords("sma_sale_items",  db2Conn,  db1Conn, 1000, 0);
+                sync.syncTableRecords("sma_sale_items",  db1Conn,  db2Conn, 100000, 1);
+                sync.syncTableRecords("sma_sale_items",  db2Conn,  db1Conn, 100000, 0);
 
-                sync.syncTableRecords("sma_purchases",  db1Conn,  db2Conn, 1000, 1);
-                sync.syncTableRecords("sma_purchases",  db2Conn,  db1Conn, 1000, 0);
+                sync.syncTableRecords("sma_purchases",  db1Conn,  db2Conn, 100000, 1);
+                sync.syncTableRecords("sma_purchases",  db2Conn,  db1Conn, 100000, 0);
 
-                sync.syncTableRecords("sma_purchase_items",  db1Conn,  db2Conn, 1000, 1);
-                sync.syncTableRecords("sma_purchase_items",  db2Conn,  db1Conn, 1000, 0);
+                sync.syncTableRecords("sma_purchase_items",  db1Conn,  db2Conn, 100000, 1);
+                sync.syncTableRecords("sma_purchase_items",  db2Conn,  db1Conn, 10, 0);
 
-                sync.syncTableRecords("sma_budget",  db1Conn,  db2Conn, 1000, 1);
-                sync.syncTableRecords("sma_budget",  db2Conn,  db1Conn, 1000, 0);
+                sync.syncTableRecords("sma_budget",  db1Conn,  db2Conn, 100000, 1);
+                sync.syncTableRecords("sma_budget",  db2Conn,  db1Conn, 100000, 0);
 
             };
 
@@ -70,7 +70,7 @@ class DbSync {
 
         while (true) {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -93,8 +93,8 @@ class DbSync {
         columnsPlaceHolder.append("?");
         String responseMessage = "";
         //Query to execute recent updates since the last update
-        String updateDb2Query = "SELECT *FROM "+tableName + " WHERE updated_at >=current_timestamp() - "+lastExecutionTime;
-        String insertDb2Query = "SELECT *FROM "+tableName + " WHERE created_at >=current_timestamp() - "+ lastExecutionTime;
+        String updateDb2Query = "SELECT *FROM "+tableName + " WHERE UNIX_TIMESTAMP(updated_at)>=UNIX_TIMESTAMP(current_timestamp()) - "+lastExecutionTime;
+        String insertDb2Query = "SELECT *FROM "+tableName + " WHERE UNIX_TIMESTAMP(created_at)>=UNIX_TIMESTAMP(current_timestamp()) - "+lastExecutionTime;
         PreparedStatement statement1 = null;
         PreparedStatement statement2 = null;
         ResultSet rs1 = null;
